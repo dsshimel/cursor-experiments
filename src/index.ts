@@ -51,7 +51,7 @@ client.login(DISCORD_TOKEN).catch((error) => {
 
 function scheduleJobs(): void {
   scheduleTask(
-    process.env.EOD_REMINDER_CRON ?? "0 17 * * *",
+    process.env.EOD_REMINDER_CRON ?? "0 19 * * *",
     () =>
       sendReminder(
         EOD_CHANNEL_ID,
@@ -63,7 +63,7 @@ function scheduleJobs(): void {
   );
 
   scheduleTask(
-    process.env.EOD_VERIFICATION_CRON ?? "5 17 * * *",
+    process.env.EOD_VERIFICATION_CRON ?? "59 23 * * *",
     () => verifyPosts(EOD_CHANNEL_ID, "EOD"),
     "EOD verification"
   );
@@ -81,7 +81,7 @@ function scheduleJobs(): void {
   );
 
   scheduleTask(
-    process.env.ATTENDANCE_VERIFICATION_CRON ?? "5 9 * * *",
+    process.env.ATTENDANCE_VERIFICATION_CRON ?? "15 9 * * *",
     () => verifyPosts(ATTENDANCE_CHANNEL_ID, "attendance"),
     "Attendance verification"
   );
