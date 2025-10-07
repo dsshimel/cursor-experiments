@@ -31,12 +31,6 @@ if (!ATTENDANCE_CHANNEL_ID) {
   throw new Error("ATTENDANCE_CHANNEL_ID is not set in the environment.");
 }
 
-if (USER_IDS.length !== 21) {
-  console.warn(
-    `Expected 21 user IDs but received ${USER_IDS.length}. Please verify the USER_IDS environment variable.`
-  );
-}
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -45,10 +39,9 @@ const client = new Client({
   ],
 });
 
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`Logged in as ${client.user?.tag ?? "unknown user"}`);
-  // TODO: Uncomment
-  // scheduleJobs();
+  scheduleJobs();
 });
 
 client.login(DISCORD_TOKEN).catch((error) => {
@@ -62,14 +55,16 @@ function scheduleJobs(): void {
     () =>
       sendReminder(
         EOD_CHANNEL_ID,
-        "Friendly reminder: please post your end-of-day update!"
+        `${
+          process.env.CURRENT_COHORT_ROLE
+        } please post your EOD update for ${getCurrentMonthDay()}`
       ),
     "EOD reminder"
   );
 
   scheduleTask(
     process.env.EOD_VERIFICATION_CRON ?? "5 17 * * *",
-    () => verifyPosts(EOD_CHANNEL_ID, "end-of-day"),
+    () => verifyPosts(EOD_CHANNEL_ID, "EOD"),
     "EOD verification"
   );
 
@@ -78,7 +73,9 @@ function scheduleJobs(): void {
     () =>
       sendReminder(
         ATTENDANCE_CHANNEL_ID,
-        "Good morning! Please remember to check in for attendance."
+        `Good morning ${
+          process.env.CURRENT_COHORT_ROLE
+        }, please check in for ${getCurrentMonthDay()}.`
       ),
     "Attendance reminder"
   );
@@ -206,4 +203,11 @@ async function fetchMessagesSince(
   }
 
   return collected;
+}
+
+function getCurrentMonthDay(): string {
+  return new Date().toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
