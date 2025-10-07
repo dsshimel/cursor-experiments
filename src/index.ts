@@ -3,32 +3,32 @@ import {
   Client,
   GatewayIntentBits,
   Message,
-  TextChannel
-} from 'discord.js';
-import cron from 'node-cron';
-import dotenv from 'dotenv';
+  TextChannel,
+} from "discord.js";
+import cron from "node-cron";
+import dotenv from "dotenv";
 
 dotenv.config();
 
-const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
-const EOD_CHANNEL_ID = process.env.EOD_CHANNEL_ID;
-const ATTENDANCE_CHANNEL_ID = process.env.ATTENDANCE_CHANNEL_ID;
-const USER_IDS = (process.env.USER_IDS ?? '')
-  .split(',')
+const DISCORD_TOKEN = process.env.DISCORD_TOKEN!;
+const EOD_CHANNEL_ID = process.env.EOD_CHANNEL_ID!;
+const ATTENDANCE_CHANNEL_ID = process.env.ATTENDANCE_CHANNEL_ID!;
+const USER_IDS = (process.env.USER_IDS ?? "")
+  .split(",")
   .map((id) => id.trim())
   .filter((id) => id.length > 0);
 const CRON_TIMEZONE = process.env.CRON_TIMEZONE;
 
 if (!DISCORD_TOKEN) {
-  throw new Error('DISCORD_TOKEN is not set in the environment.');
+  throw new Error("DISCORD_TOKEN is not set in the environment.");
 }
 
 if (!EOD_CHANNEL_ID) {
-  throw new Error('EOD_CHANNEL_ID is not set in the environment.');
+  throw new Error("EOD_CHANNEL_ID is not set in the environment.");
 }
 
 if (!ATTENDANCE_CHANNEL_ID) {
-  throw new Error('ATTENDANCE_CHANNEL_ID is not set in the environment.');
+  throw new Error("ATTENDANCE_CHANNEL_ID is not set in the environment.");
 }
 
 if (USER_IDS.length !== 21) {
@@ -41,51 +41,52 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
-client.once('ready', () => {
-  console.log(`Logged in as ${client.user?.tag ?? 'unknown user'}`);
-  scheduleJobs();
+client.once("ready", () => {
+  console.log(`Logged in as ${client.user?.tag ?? "unknown user"}`);
+  // TODO: Uncomment
+  // scheduleJobs();
 });
 
 client.login(DISCORD_TOKEN).catch((error) => {
-  console.error('Failed to login to Discord:', error);
+  console.error("Failed to login to Discord:", error);
   process.exit(1);
 });
 
 function scheduleJobs(): void {
   scheduleTask(
-    process.env.EOD_REMINDER_CRON ?? '0 17 * * *',
+    process.env.EOD_REMINDER_CRON ?? "0 17 * * *",
     () =>
       sendReminder(
         EOD_CHANNEL_ID,
-        'Friendly reminder: please post your end-of-day update!'
+        "Friendly reminder: please post your end-of-day update!"
       ),
-    'EOD reminder'
+    "EOD reminder"
   );
 
   scheduleTask(
-    process.env.EOD_VERIFICATION_CRON ?? '5 17 * * *',
-    () => verifyPosts(EOD_CHANNEL_ID, 'end-of-day'),
-    'EOD verification'
+    process.env.EOD_VERIFICATION_CRON ?? "5 17 * * *",
+    () => verifyPosts(EOD_CHANNEL_ID, "end-of-day"),
+    "EOD verification"
   );
 
   scheduleTask(
-    process.env.ATTENDANCE_REMINDER_CRON ?? '0 9 * * *',
+    process.env.ATTENDANCE_REMINDER_CRON ?? "0 9 * * *",
     () =>
       sendReminder(
         ATTENDANCE_CHANNEL_ID,
-        'Good morning! Please remember to check in for attendance.'
+        "Good morning! Please remember to check in for attendance."
       ),
-    'Attendance reminder'
+    "Attendance reminder"
   );
 
   scheduleTask(
-    process.env.ATTENDANCE_VERIFICATION_CRON ?? '5 9 * * *',
-    () => verifyPosts(ATTENDANCE_CHANNEL_ID, 'attendance'),
-    'Attendance verification'
+    process.env.ATTENDANCE_VERIFICATION_CRON ?? "5 9 * * *",
+    () => verifyPosts(ATTENDANCE_CHANNEL_ID, "attendance"),
+    "Attendance verification"
   );
 }
 
@@ -103,16 +104,19 @@ function scheduleTask(
         });
       },
       {
-        timezone: CRON_TIMEZONE
+        timezone: CRON_TIMEZONE,
       }
     );
 
     console.log(
       `Scheduled ${description} job with cron expression: ${cronExpression}` +
-        (CRON_TIMEZONE ? ` (timezone: ${CRON_TIMEZONE})` : '')
+        (CRON_TIMEZONE ? ` (timezone: ${CRON_TIMEZONE})` : "")
     );
   } catch (error) {
-    console.error(`Failed to schedule ${description} job (${cronExpression}):`, error);
+    console.error(
+      `Failed to schedule ${description} job (${cronExpression}):`,
+      error
+    );
   }
 }
 
@@ -137,14 +141,18 @@ async function verifyPosts(channelId: string, label: string): Promise<void> {
   const missingUsers = USER_IDS.filter((id) => !usersWhoPosted.has(id));
 
   if (missingUsers.length === 0) {
-    console.log(`All users completed their ${label} posts in #${channel.name}.`);
+    console.log(
+      `All users completed their ${label} posts in #${channel.name}.`
+    );
   } else {
-    const mentionList = missingUsers.map((id) => `<@${id}>`).join(', ');
+    const mentionList = missingUsers.map((id) => `<@${id}>`).join(", ");
     await channel.send({
-      content: `The following users still need to complete their ${label} update: ${mentionList}`
+      content: `The following users still need to complete their ${label} update: ${mentionList}`,
     });
     console.warn(
-      `Missing ${label} updates from ${missingUsers.length} users in #${channel.name}: ${missingUsers.join(', ')}`
+      `Missing ${label} updates from ${missingUsers.length} users in #${
+        channel.name
+      }: ${missingUsers.join(", ")}`
     );
   }
 }
@@ -153,7 +161,9 @@ async function fetchTextChannel(channelId: string): Promise<TextChannel> {
   const channel = await client.channels.fetch(channelId);
 
   if (!channel || channel.type !== ChannelType.GuildText) {
-    throw new Error(`Channel ${channelId} is not a text channel or could not be found.`);
+    throw new Error(
+      `Channel ${channelId} is not a text channel or could not be found.`
+    );
   }
 
   return channel as TextChannel;
