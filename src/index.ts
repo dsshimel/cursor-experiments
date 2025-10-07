@@ -55,9 +55,9 @@ function scheduleJobs(): void {
     () =>
       sendReminder(
         EOD_CHANNEL_ID,
-        `${
-          process.env.CURRENT_COHORT_ROLE
-        } please post your EOD update for ${getCurrentMonthDay()}`
+        `${roleMention(
+          process.env.CURRENT_COHORT_ROLE_ID!
+        )} please post your EOD update for ${getCurrentMonthDay()} when you're done working for the day.`
       ),
     "EOD reminder"
   );
@@ -73,9 +73,9 @@ function scheduleJobs(): void {
     () =>
       sendReminder(
         ATTENDANCE_CHANNEL_ID,
-        `Good morning ${
-          process.env.CURRENT_COHORT_ROLE
-        }, please check in for ${getCurrentMonthDay()}.`
+        `Good morning ${roleMention(
+          process.env.CURRENT_COHORT_ROLE_ID!
+        )}, please check in for ${getCurrentMonthDay()}.`
       ),
     "Attendance reminder"
   );
@@ -210,4 +210,8 @@ function getCurrentMonthDay(): string {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function roleMention(roleId: string) {
+  return `<@&${roleId}>`;
 }
